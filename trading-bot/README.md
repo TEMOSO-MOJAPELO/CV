@@ -1,7 +1,8 @@
 # XAUUSD Breakout Straddle EA (MetaTrader 5)
 
-A breakout bot for **Gold (XAUUSD)** built for **JustMarkets MT5**, sized for
-**micro / $10 accounts** running high leverage (e.g. **1:3000**).
+A breakout bot for **Gold (XAUUSD)** built for **JustMarkets MT5 (standard
+account)**, sized for a **$10 deposit** on high leverage (e.g. **1:3000**).
+Works on any chart timeframe; **M5–M15** recommended.
 
 It places a **Buy Stop above** and a **Sell Stop below** a recent price range.
 Whichever side breaks out triggers the trade; the other order is cancelled
@@ -13,9 +14,9 @@ winner. Built-in filters keep the number of trades low to avoid over-trading.
 > account can be wiped out quickly. This code is provided for educational use.
 > **Forward-test on a DEMO account for several weeks before risking real money.**
 
-> 💡 **For a $10 deposit, use a JustMarkets CENT account — not a Standard one.**
-> See [§4](#4-the-10-account-reality-use-a-cent-account) for the reason; it is
-> the single most important setting on this page.
+> 💡 **$10 on a STANDARD account:** the minimum lot (`0.01`) is the only lot you
+> can trade, so your risk is controlled **only by the stop-loss distance**. The
+> defaults use a tight ~$3 stop. See [§4](#4-the-10-standard-account--how-risk-works).
 
 ---
 
@@ -71,57 +72,56 @@ The EA auto-detects the point size, so it also works on 3-decimal feeds.
 
 ---
 
-## 4. The $10 account reality — use a CENT account
+## 4. The $10 standard account — how risk works
 
-A $10 deposit is **tiny** for gold. The minimum trade size is `0.01` lots, and
-what that risks depends entirely on the account type:
+On a **standard** account the smallest trade is `0.01` lots, where roughly
+**$1 of gold movement = $1 of P/L**. With only $10 you can't go below `0.01`, so
+the lot is fixed and **your risk per trade is set entirely by the stop-loss
+distance**:
 
-| Account type | 0.01 lot ≈ | A $5 (500-point) stop costs | Verdict for $10 |
-|---|---|---|---|
-| **Standard** | 1 oz of gold | **~$5** (≈50% of the account) | ❌ Cannot be risk-managed — one or two losers blows it |
-| **Cent** | 1/100 of that | **~$0.05** | ✅ Sane — risk-% sizing works properly |
+| Stop-loss | ≈ Risk at 0.01 lot | % of a $10 account |
+|----------:|-------------------:|-------------------:|
+| 300 pts ($3) — default | ~$3 | ~30% |
+| 200 pts ($2) | ~$2 | ~20% |
+| 500 pts ($5) | ~$5 | ~50% |
 
-**So: open a JustMarkets _Cent_ account, deposit the $10, and run the EA there.**
-On a cent account your $10 displays as **1,000** (cents) and the EA's risk-based
-sizing reads the balance and tick value directly — no special settings needed,
-the maths just works out small. If you insist on a Standard account, you are
-effectively gambling the whole $10 on each trade; I don't recommend running it.
+The defaults use a **tight $3 stop** and a **2:1 target (~$6)** so one winner
+covers two losers, plus break-even/trailing to protect and stretch profit. Be
+clear-eyed: a $10 standard gold account has very little room for a losing run —
+**a few consecutive stops can end it.** Trade the smallest sensible stop, keep
+`InpMaxSetupsPerDay` low, and demo-test first.
 
-### Suggested settings ($10 on a CENT account, M15)
+### Suggested settings ($10 standard, M5–M15)
 
-These are conservative starting points — tune with the Strategy Tester, don't
-just trust them.
+Conservative starting points — tune in the Strategy Tester, don't just trust them.
 
 | Input | Suggested | Notes |
 |-------|-----------|-------|
-| `InpRiskMode` | `RISK_PERCENT` | sizes the lot from balance + SL distance |
-| `InpRiskPercent` | `1.0`–`2.0` | 2% of $10 = **$0.20 risk per trade** (cent acct) |
-| `InpRangeBars` | `12` | ~3h of range on M15 |
-| `InpBufferPoints` | `150` | $1.50 beyond the range to confirm the break |
-| `InpMinRangePoints` | `400` | skip dead/choppy ranges |
-| `InpMaxRangePoints` | `6000` | skip if it already moved $60 |
-| `InpMaxSpreadPoints` | `50` | skip news-spike spreads |
-| `InpStopLossPoints` | `1000` | $10 stop |
+| `InpRiskMode` | `RISK_FIXED_LOT` | $10 standard is pinned at the min lot anyway |
+| `InpFixedLot` | `0.01` | the minimum / only realistic lot |
+| `InpRangeBars` | `12` | 1h of range on M5, 3h on M15 |
+| `InpBufferPoints` | `80` | $0.80 beyond the range to confirm the break |
+| `InpMinRangePoints` | `150` | low enough that **M5 still triggers** |
+| `InpMaxRangePoints` | `8000` | skip if it already moved $80 |
+| `InpMaxSpreadPoints` | `60` | skip news-spike spreads |
+| `InpStopLossPoints` | `300` | ~$3 stop (your main risk lever) |
 | `InpTakeProfitPts` | `0` | use R:R below |
-| `InpRewardRisk` | `2.0` | TP = $20 (2× the stop) |
-| `InpBE_TriggerPts` | `400` | arm break-even after $4 in profit |
-| `InpBE_LockPts` | `80` | lock ~$0.80 once at break-even |
-| `InpTrailStartPts` | `800` | start trailing after $8 |
-| `InpTrailDistPts` | `500` | trail $5 behind price |
+| `InpRewardRisk` | `2.0` | TP ≈ $6 (2× the stop) |
+| `InpBE_TriggerPts` | `150` | break-even armed after ~$1.50 profit |
+| `InpBE_LockPts` | `30` | lock ~$0.30 once at break-even |
+| `InpTrailStartPts` | `250` | start trailing after ~$2.50 |
+| `InpTrailDistPts` | `200` | trail $2 behind price |
 | `InpMaxSetupsPerDay` | `1` | at most one straddle per day |
 | `InpUseTimeFilter` | `true` | only set up during liquid hours |
 | `InpStartHour` / `InpEndHour` | `7` / `18` | **server time** – adjust! |
 
-### Why risk-based sizing matters here
-With `RISK_PERCENT`, lot size = `(balance × risk%) ÷ money-lost-if-SL-hit`, then
-clamped to the broker's minimum lot (`0.01`). On a **cent** account that minimum
-is tiny, so a small balance maps to a small real risk. Leverage (1:3000) only
-changes the *margin* required to open the trade, **not** your risk per trade —
-that is controlled by the SL distance and lot size, which this EA handles.
-
-> Note: if the computed lot falls below `0.01`, the EA still trades `0.01` (it
-> can't go smaller). On a **standard** $10 account that floor alone over-risks
-> you — another reason to use a cent account.
+### Works on any timeframe (M5–M15)
+The EA reads the chart's own timeframe (`_Period`) for everything — range,
+new-bar detection, entries — so **it places the straddle no matter which
+timeframe you attach it to.** Lower timeframes have smaller ranges, which is why
+`InpMinRangePoints` is kept low (150); if you still see no trades on M5, drop it
+toward `80`. On higher timeframes you may want a wider stop (the ranges and moves
+are bigger), e.g. M15 → `InpStopLossPoints` 400–600.
 
 ---
 

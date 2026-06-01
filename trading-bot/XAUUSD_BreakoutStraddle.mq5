@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|                                    XAUUSD_BreakoutStraddle.mq5    |
 //|                  Breakout straddle EA for XAUUSD (Gold)           |
-//|                  Built for JustMarkets MT5, $10 cent accounts     |
+//|                  Built for JustMarkets MT5 standard, $10 account  |
 //+------------------------------------------------------------------+
 //
 //  WHAT IT DOES
@@ -29,22 +29,21 @@
 //       1000 points  = $10.00 of price movement
 //  The EA auto-detects the point size, so it also works on 3-decimal feeds.
 //
-//  RISK  (READ THIS FOR A $10 ACCOUNT)
-//  -----------------------------------
-//  Default sizing is RISK-BASED: it computes the lot size from your chosen
-//  % of balance and the SL distance. On a tiny $10 balance this matters a lot:
+//  RISK  (READ THIS FOR A $10 STANDARD ACCOUNT)
+//  --------------------------------------------
+//  On a STANDARD account the smallest trade is 0.01 lots, where 1 point
+//  (0.01 of price) is worth about $0.01, i.e. $1 of gold movement ~= $1 P/L.
+//  With only $10 you therefore CANNOT make the lot any smaller - you are
+//  pinned at 0.01. The ONLY way to control risk is the STOP-LOSS DISTANCE:
 //
-//   * STANDARD account: the smallest lot (0.01) already risks ~$1 per $1 of
-//     gold movement, so a normal breakout stop would risk most of a $10
-//     account in ONE trade. A $10 standard gold account cannot be sized
-//     sensibly - it WILL be over-risked. Do not run this there.
+//        loss if stopped  ~=  StopLossPoints * $0.01   (at 0.01 lot)
+//        300 points ($3 stop)  ->  ~$3 risk  =  ~30% of a $10 account
 //
-//   * CENT account (recommended for $10 on JustMarkets): your $10 shows as
-//     1000 cents and lots are 1/100 the size, so risk-% sizing produces a
-//     genuinely small per-trade risk. The EA reads balance + tick value
-//     directly, so the maths is automatically correct on a cent account.
-//
-//  Trading XAUUSD on 1:3000 leverage is high risk. Forward-test on DEMO first.
+//  That is high. Defaults below use a tight $3 stop so a single loss is
+//  survivable, and over-trading controls keep the trade count low. Even so,
+//  a $10 standard gold account has almost no room for a losing streak.
+//  TEST ON DEMO FIRST. Leverage (1:3000) only sets the margin to open the
+//  trade - it does NOT change your per-trade risk, which is SL distance x lot.
 //+------------------------------------------------------------------+
 #property copyright "Generated for Temoso Mojapelo"
 #property version   "1.00"
@@ -69,32 +68,34 @@ input string         InpComment        = "XAU_Breakout"; // Order comment
 input ulong          InpSlippage       = 30;         // Max slippage / deviation (points)
 
 input group "=== Position sizing / risk ==="
-input ENUM_RISK_MODE InpRiskMode       = RISK_PERCENT; // Sizing method
+// On a $10 STANDARD account 0.01 is the minimum and only realistic lot.
+input ENUM_RISK_MODE InpRiskMode       = RISK_FIXED_LOT; // Sizing method
 input double         InpFixedLot       = 0.01;       // Fixed lot (if RISK_FIXED_LOT)
 input double         InpRiskPercent    = 1.0;        // Risk % of balance (if RISK_PERCENT)
 
 input group "=== Breakout range ==="
+// Defaults kept small so the straddle still places on lower timeframes (M5).
 input int            InpRangeBars      = 12;         // Bars used to measure the range
-input int            InpBufferPoints   = 150;        // Buffer above/below range for entries (points)
-input int            InpMinRangePoints = 400;        // Skip if range smaller than this (points)
-input int            InpMaxRangePoints = 6000;       // Skip if range larger than this (points)
-input int            InpMaxSpreadPoints= 50;         // Skip if spread wider than this (points)
+input int            InpBufferPoints   = 80;         // Buffer above/below range for entries (points)
+input int            InpMinRangePoints = 150;        // Skip if range smaller than this (points)
+input int            InpMaxRangePoints = 8000;       // Skip if range larger than this (points)
+input int            InpMaxSpreadPoints= 60;         // Skip if spread wider than this (points)
 
 input group "=== Stops & target ==="
-input int            InpStopLossPoints = 1000;       // Stop Loss distance from entry (points)
+input int            InpStopLossPoints = 300;        // Stop Loss distance from entry (points) ~ $3 at 0.01 lot
 input int            InpTakeProfitPts  = 0;          // Take Profit distance (points). 0 = use R:R below
-input double         InpRewardRisk     = 2.0;        // Reward:Risk used when TP points = 0
+input double         InpRewardRisk     = 2.0;        // Reward:Risk used when TP points = 0 (TP ~ $6)
 
 input group "=== Break-even ==="
 input bool           InpUseBreakeven   = true;       // Move SL to break-even once in profit
-input int            InpBE_TriggerPts  = 400;        // Profit (points) needed to arm break-even
-input int            InpBE_LockPts     = 80;         // Points locked in beyond entry at break-even
+input int            InpBE_TriggerPts  = 150;        // Profit (points) needed to arm break-even
+input int            InpBE_LockPts     = 30;         // Points locked in beyond entry at break-even
 
 input group "=== Trailing stop (stretch profits) ==="
 input bool           InpUseTrailing    = true;       // Enable trailing stop
-input int            InpTrailStartPts  = 800;        // Profit (points) before trailing starts
-input int            InpTrailDistPts   = 500;        // Trailing distance behind price (points)
-input int            InpTrailStepPts   = 50;         // Minimum step to move the trail (points)
+input int            InpTrailStartPts  = 250;        // Profit (points) before trailing starts
+input int            InpTrailDistPts   = 200;        // Trailing distance behind price (points)
+input int            InpTrailStepPts   = 30;         // Minimum step to move the trail (points)
 
 input group "=== Pending order handling ==="
 input int            InpExpiryMinutes  = 120;        // Delete untriggered pending orders after X min (0 = never)
