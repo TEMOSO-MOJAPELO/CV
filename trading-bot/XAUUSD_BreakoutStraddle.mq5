@@ -310,8 +310,8 @@ void TryPlaceStraddle()
       expiry  = TimeCurrent() + InpExpiryMinutes * 60;
       timeType = ORDER_TIME_SPECIFIED;
      }
-   trade.SetTypeTime(timeType);
 
+   // timeType + expiry are passed straight into the order calls below.
    bool ok1 = trade.BuyStop(buyLot, buyEntry, _Symbol, buySL, buyTP, timeType, expiry, InpComment);
    bool ok2 = trade.SellStop(sellLot, sellEntry, _Symbol, sellSL, sellTP, timeType, expiry, InpComment);
 
