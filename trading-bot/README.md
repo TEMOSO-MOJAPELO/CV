@@ -1,7 +1,7 @@
 # XAUUSD Breakout Straddle EA (MetaTrader 5)
 
 A breakout bot for **Gold (XAUUSD)** built for **JustMarkets MT5**, sized for
-small accounts (from **$200**) running high leverage (e.g. **1:3000**).
+**micro / $10 accounts** running high leverage (e.g. **1:3000**).
 
 It places a **Buy Stop above** and a **Sell Stop below** a recent price range.
 Whichever side breaks out triggers the trade; the other order is cancelled
@@ -9,9 +9,13 @@ automatically (OCO). Every trade carries a Stop Loss and a Take Profit, then the
 stop is moved to **break-even + a locked profit** and **trailed** to stretch the
 winner. Built-in filters keep the number of trades low to avoid over-trading.
 
-> ⚠️ **Risk warning.** Trading XAUUSD on 1:3000 leverage is high risk. A small
+> ⚠️ **Risk warning.** Trading XAUUSD on 1:3000 leverage is high risk. A $10
 > account can be wiped out quickly. This code is provided for educational use.
 > **Forward-test on a DEMO account for several weeks before risking real money.**
+
+> 💡 **For a $10 deposit, use a JustMarkets CENT account — not a Standard one.**
+> See [§4](#4-the-10-account-reality-use-a-cent-account) for the reason; it is
+> the single most important setting on this page.
 
 ---
 
@@ -67,15 +71,31 @@ The EA auto-detects the point size, so it also works on 3-decimal feeds.
 
 ---
 
-## 4. Suggested settings for a $200 account
+## 4. The $10 account reality — use a CENT account
 
-Start on **M15**. These are conservative starting points — tune with the
-Strategy Tester, don't just trust them.
+A $10 deposit is **tiny** for gold. The minimum trade size is `0.01` lots, and
+what that risks depends entirely on the account type:
+
+| Account type | 0.01 lot ≈ | A $5 (500-point) stop costs | Verdict for $10 |
+|---|---|---|---|
+| **Standard** | 1 oz of gold | **~$5** (≈50% of the account) | ❌ Cannot be risk-managed — one or two losers blows it |
+| **Cent** | 1/100 of that | **~$0.05** | ✅ Sane — risk-% sizing works properly |
+
+**So: open a JustMarkets _Cent_ account, deposit the $10, and run the EA there.**
+On a cent account your $10 displays as **1,000** (cents) and the EA's risk-based
+sizing reads the balance and tick value directly — no special settings needed,
+the maths just works out small. If you insist on a Standard account, you are
+effectively gambling the whole $10 on each trade; I don't recommend running it.
+
+### Suggested settings ($10 on a CENT account, M15)
+
+These are conservative starting points — tune with the Strategy Tester, don't
+just trust them.
 
 | Input | Suggested | Notes |
 |-------|-----------|-------|
 | `InpRiskMode` | `RISK_PERCENT` | sizes the lot from balance + SL distance |
-| `InpRiskPercent` | `0.5`–`1.0` | 1% of $200 = **$2 risk per trade** |
+| `InpRiskPercent` | `1.0`–`2.0` | 2% of $10 = **$0.20 risk per trade** (cent acct) |
 | `InpRangeBars` | `12` | ~3h of range on M15 |
 | `InpBufferPoints` | `150` | $1.50 beyond the range to confirm the break |
 | `InpMinRangePoints` | `400` | skip dead/choppy ranges |
@@ -93,10 +113,15 @@ Strategy Tester, don't just trust them.
 | `InpStartHour` / `InpEndHour` | `7` / `18` | **server time** – adjust! |
 
 ### Why risk-based sizing matters here
-With `RISK_PERCENT`, lot size = `(balance × risk%) ÷ money-lost-if-SL-hit`. So at
-1% on $200 with a $10 stop the EA sizes to roughly **0.01–0.02 lots** and your
-loss is capped near $2 regardless of the 1:3000 leverage. Leverage only changes
-the *margin* required, not your risk per trade — that's controlled by SL + lot.
+With `RISK_PERCENT`, lot size = `(balance × risk%) ÷ money-lost-if-SL-hit`, then
+clamped to the broker's minimum lot (`0.01`). On a **cent** account that minimum
+is tiny, so a small balance maps to a small real risk. Leverage (1:3000) only
+changes the *margin* required to open the trade, **not** your risk per trade —
+that is controlled by the SL distance and lot size, which this EA handles.
+
+> Note: if the computed lot falls below `0.01`, the EA still trades `0.01` (it
+> can't go smaller). On a **standard** $10 account that floor alone over-risks
+> you — another reason to use a cent account.
 
 ---
 
@@ -117,7 +142,7 @@ the *margin* required, not your risk per trade — that's controlled by SL + lot
 
 1. **View → Strategy Tester** (Ctrl+R).
 2. Expert: `XAUUSD_BreakoutStraddle`, Symbol: your gold symbol, TF: M15.
-3. Model: **Every tick based on real ticks**, deposit `200`, leverage `1:3000`.
+3. Model: **Every tick based on real ticks**, deposit `10`, leverage `1:3000`.
 4. Run, then check the report: profit factor, max drawdown, and number of trades.
 5. Use the **optimisation** tab to sweep `InpRangeBars`, `InpBufferPoints`,
    `InpRewardRisk`, and the trailing inputs.

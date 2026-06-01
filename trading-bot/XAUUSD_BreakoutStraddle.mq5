@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|                                    XAUUSD_BreakoutStraddle.mq5    |
 //|                  Breakout straddle EA for XAUUSD (Gold)           |
-//|                  Built for JustMarkets MT5, small accounts        |
+//|                  Built for JustMarkets MT5, $10 cent accounts     |
 //+------------------------------------------------------------------+
 //
 //  WHAT IT DOES
@@ -29,12 +29,22 @@
 //       1000 points  = $10.00 of price movement
 //  The EA auto-detects the point size, so it also works on 3-decimal feeds.
 //
-//  RISK
-//  ----
+//  RISK  (READ THIS FOR A $10 ACCOUNT)
+//  -----------------------------------
 //  Default sizing is RISK-BASED: it computes the lot size from your chosen
-//  % of balance and the SL distance, so a $200 account stays controlled even
-//  at 1:3000 leverage. Trading XAUUSD with high leverage is high risk -
-//  forward-test on a DEMO account first.
+//  % of balance and the SL distance. On a tiny $10 balance this matters a lot:
+//
+//   * STANDARD account: the smallest lot (0.01) already risks ~$1 per $1 of
+//     gold movement, so a normal breakout stop would risk most of a $10
+//     account in ONE trade. A $10 standard gold account cannot be sized
+//     sensibly - it WILL be over-risked. Do not run this there.
+//
+//   * CENT account (recommended for $10 on JustMarkets): your $10 shows as
+//     1000 cents and lots are 1/100 the size, so risk-% sizing produces a
+//     genuinely small per-trade risk. The EA reads balance + tick value
+//     directly, so the maths is automatically correct on a cent account.
+//
+//  Trading XAUUSD on 1:3000 leverage is high risk. Forward-test on DEMO first.
 //+------------------------------------------------------------------+
 #property copyright "Generated for Temoso Mojapelo"
 #property version   "1.00"
